@@ -1,13 +1,14 @@
 use std::iter;
 
+use crate::helpers::ascii_to_digit;
+
 /// Simple wrapper of [char::is_ascii_digit] to not require a reference
 fn is_ascii_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
 
 fn digit_at(s: &str, i: usize) -> u32 {
-    let byte = s.as_bytes()[i] - b'0';
-    byte.into()
+    ascii_to_digit(s.as_bytes()[i])
 }
 
 #[derive(Eq)]
