@@ -82,3 +82,41 @@ pub fn solve_part1(schematic: &Schematic) -> u32 {
         })
         .sum()
 }
+
+#[aoc(day3, part2)]
+pub fn solve_part2(schematic: &Schematic) -> u32 {
+    schematic
+        .grid
+        .iter()
+        .filter(|(_, _, value)| matches!(value, Value::Symbol(b'*')))
+        .map(|(x, y, _)| {
+            let mut prev_part_id: Option<usize> = None;
+            let part_ids: Vec<usize> = VALUES_AROUND
+                .iter()
+                .filter_map(|get| match get(&schematic.grid, x, y) {
+                    Some(Value::Part(index)) => {
+                        let index = *index;
+                        match prev_part_id {
+                            Some(prev_id) if prev_id == index => None,
+                            _ => {
+                                prev_part_id = Some(index);
+                                prev_part_id
+                            }
+                        }
+                    }
+                    _ => {
+                        prev_part_id = None;
+                        None
+                    }
+                })
+                .take(3)
+                .collect();
+
+            if part_ids.len() == 2 {
+                schematic.parts[part_ids[0]] * schematic.parts[part_ids[1]]
+            } else {
+                0
+            }
+        })
+        .sum()
+}
