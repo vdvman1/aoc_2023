@@ -1,58 +1,41 @@
 use crate::helpers::parse_vec;
 
-pub struct Card {
-    winners: Vec<u32>,
-    plays: Vec<u32>,
-}
-
 #[aoc_generator(day4)]
-pub fn input_gen(input: &str) -> Vec<Card> {
+pub fn input_gen(input: &str) -> Vec<usize> {
     input
         .lines()
         .map(|line| {
             let (_, numbers) = line.split_once(": ").unwrap();
             let (winners, plays) = numbers.split_once(" | ").unwrap();
-            Card {
-                winners: parse_vec(winners, " "),
-                plays: parse_vec(plays, " "),
-            }
+            let winners = parse_vec::<u32>(winners, " ");
+
+            plays
+                .split(" ")
+                .flat_map(str::parse::<u32>)
+                .filter(|play| winners.contains(play))
+                .count()
         })
         .collect()
 }
 
-fn count_wins(card: &Card) -> usize {
-    card.plays
-        .iter()
-        .filter(|play| card.winners.contains(play))
-        .count()
-}
-
 #[aoc(day4, part1)]
-pub fn solve_part1(cards: &[Card]) -> u32 {
-    cards
-        .iter()
-        .map(|card| {
-            let count = count_wins(card);
-            if count == 0 {
-                0
-            } else {
-                1 << (count - 1)
-            }
-        })
+pub fn solve_part1(wins: &[usize]) -> u32 {
+    wins.iter()
+        .copied()
+        .map(|wins| if wins == 0 { 0 } else { 1 << (wins - 1) })
         .sum()
 }
 
 #[aoc(day4, part2)]
-pub fn solve_part2(cards: &[Card]) -> u32 {
-    let mut card_counts = vec![1u32; cards.len()];
-    cards
-        .iter()
+pub fn solve_part2(wins: &[usize]) -> u32 {
+    let mut card_counts = vec![1u32; wins.len()];
+    wins.iter()
+        .copied()
         .enumerate()
-        .map(|(index, card)| {
-            let count = count_wins(card);
+        .map(|(index, wins)| {
             let dups = card_counts[index];
 
-            for offset in 1..=count {
+            for offset in 1..=wins {
                 card_counts[index + offset] += dups;
             }
 
