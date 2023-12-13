@@ -1,4 +1,4 @@
-use std::ops::Index;
+use std::{ops::Index, str::FromStr};
 
 pub fn try_ascii_to_digit(c: u8) -> Option<u32> {
     let digit = c.wrapping_sub(b'0');
@@ -11,6 +11,10 @@ pub fn try_ascii_to_digit(c: u8) -> Option<u32> {
 
 pub fn ascii_to_digit(c: u8) -> u32 {
     (c - b'0').into()
+}
+
+pub fn parse_vec<T: FromStr>(input: &str, delimiter: &str) -> Vec<T> {
+    input.split(delimiter).flat_map(str::parse).collect()
 }
 
 /// Simple 2d grid of elements
