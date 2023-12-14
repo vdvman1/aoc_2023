@@ -7,6 +7,8 @@ mod day1;
 mod day2;
 mod day3;
 mod day4;
+
+#[allow(dead_code)]
 mod helpers;
 
 aoc_lib! { year = 2023 }

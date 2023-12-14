@@ -1,4 +1,8 @@
-use std::{ops::Index, str::FromStr};
+use std::{
+    borrow::Borrow,
+    ops::{Add, Index, RangeInclusive, Sub},
+    str::FromStr,
+};
 
 pub fn try_ascii_to_digit(c: u8) -> Option<u32> {
     let digit = c.wrapping_sub(b'0');
@@ -175,5 +179,79 @@ impl<'a, T> Iterator for Vec2dIter<'a, T> {
         }
 
         Some((x, y, item))
+    }
+}
+
+#[derive(Default)]
+pub struct RangeMap<K: Ord + Copy, V> {
+    entries: Vec<(RangeInclusive<K>, V)>,
+}
+
+impl<K: Ord + Copy, V> RangeMap<K, V> {
+    pub fn new() -> Self {
+        RangeMap {
+            entries: Vec::new(),
+        }
+    }
+
+    pub fn from_iter(iter: impl Iterator<Item = (RangeInclusive<K>, V)>) -> Self {
+        let mut map = RangeMap {
+            entries: Vec::from_iter(iter),
+        };
+
+        map.entries
+            .sort_unstable_by_key(|(range, _)| *range.start());
+
+        map
+    }
+
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q> + Ord,
+        Q: Ord + ?Sized,
+    {
+        self.get_range(key).map(|(_, value)| value)
+    }
+
+    pub fn get_range<Q>(&self, key: &Q) -> Option<(&RangeInclusive<K>, &V)>
+    where
+        K: Borrow<Q> + Ord,
+        Q: Ord + ?Sized,
+    {
+        for (range, value) in &self.entries {
+            if key < range.start().borrow() {
+                // larger than previous range, and smaller than this range
+                return None;
+            }
+
+            if key <= range.end().borrow() {
+                // in this range
+                return Some((range, value));
+            }
+        }
+
+        // Larger than all ranges, or no ranges exist
+        None
+    }
+}
+
+impl<T: Ord + Copy> RangeMap<T, T> {
+    pub fn get_or_key<'a, 'b, Q>(&'a self, key: &'b Q) -> &'b Q
+    where
+        'a: 'b,
+        T: Borrow<Q> + Ord,
+        Q: Ord + ?Sized,
+    {
+        self.get(key).map(Borrow::borrow).unwrap_or(key)
+    }
+
+    pub fn get_and_offset_or_key(&self, key: T) -> T
+    where
+        T: Sub<T, Output = T> + Add<T, Output = T>,
+    {
+        match self.get_range(&key) {
+            Some((range, value)) => key - *range.start() + *value,
+            None => key,
+        }
     }
 }
