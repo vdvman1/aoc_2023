@@ -1,6 +1,7 @@
+#[derive(Default)]
 pub struct Race {
-    time: u32,
-    distance: u32,
+    time: u64,
+    distance: u64,
 }
 
 #[aoc_generator(day6, part1)]
@@ -8,8 +9,10 @@ pub fn input_gen1(input: &str) -> Vec<Race> {
     let mut rows = input.lines().map(|line| {
         line.split_ascii_whitespace() // all the fields are separated by one or more spaces
             .skip(1) // Skip row name, including the colon
-            .flat_map(str::parse::<u32>)
+            .flat_map(str::parse::<u64>)
     });
+
+    // The order of calls to next is important, do not rearrange
     let times = rows.next().unwrap();
     let distances = rows.next().unwrap();
 
@@ -19,8 +22,7 @@ pub fn input_gen1(input: &str) -> Vec<Race> {
         .collect()
 }
 
-#[aoc(day6, part1)]
-pub fn solve_part1(races: &[Race]) -> u32 {
+fn count_ways_to_win(race: &Race) -> u64 {
     // d(h, t) = distance mm travelled in race duration "t" ms if button is held for duration "h" ms
     //         = (time left after holding) * (velocity from holding)
     //         = (t - h) * h
@@ -47,20 +49,43 @@ pub fn solve_part1(races: &[Race]) -> u32 {
     // h₂ = floor( (t + i) / 2 )
     // Number of ways to win = h₂ - h₁ + 1
 
-    races
-        .iter()
-        .map(|race| {
-            let t = race.time as f64;
-            let discriminator = t * t - 4.0 * ((race.distance + 1) as f64);
-            let sqrt_discriminator = discriminator.sqrt();
+    let t = race.time as f64;
+    let discriminator = t * t - 4.0 * ((race.distance + 1) as f64);
+    let sqrt_discriminator = discriminator.sqrt();
 
-            let hold_min = (t - sqrt_discriminator) / 2.0;
-            let hold_min = hold_min.ceil() as u32;
+    let hold_min = (t - sqrt_discriminator) / 2.0;
+    let hold_min = hold_min.ceil() as u64;
 
-            let hold_max = (t + sqrt_discriminator) / 2.0;
-            let hold_max = hold_max.floor() as u32;
+    let hold_max = (t + sqrt_discriminator) / 2.0;
+    let hold_max = hold_max.floor() as u64;
 
-            hold_max - hold_min + 1
-        })
-        .product()
+    hold_max - hold_min + 1
+}
+
+#[aoc(day6, part1)]
+pub fn solve_part1(races: &[Race]) -> u64 {
+    races.iter().map(count_ways_to_win).product()
+}
+
+#[aoc_generator(day6, part2)]
+pub fn input_gen2(input: &str) -> Race {
+    let mut rows = input.lines().map(|line| {
+        line.split_ascii_whitespace() // all the fields are separated by one or more spaces
+            .skip(1) // Skip row name, including the colon
+            .collect::<String>() // Combine all digits into a single string
+            .parse::<u64>()
+            .unwrap()
+    });
+
+    let mut race = Race::default();
+    // The order of calls to next is important, do not rearrange
+    race.time = rows.next().unwrap();
+    race.distance = rows.next().unwrap();
+
+    race
+}
+
+#[aoc(day6, part2)]
+pub fn solve_part2(race: &Race) -> u64 {
+    count_ways_to_win(race)
 }
