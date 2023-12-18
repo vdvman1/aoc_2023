@@ -25,6 +25,52 @@ pub fn get_bytes_len<const START: usize, const LEN: usize>(input: &str) -> [u8; 
     input[START..(START + LEN)].as_bytes().try_into().unwrap()
 }
 
+// TODO: Implement gcd for more types generically
+
+/// Calculate the greatest common divisor
+///
+/// Uses [Stein's algorithm](https://en.wikipedia.org/wiki/Binary_GCD_algorithm)
+pub fn gcd(mut a: usize, mut b: usize) -> usize {
+    if a == 0 || b == 0 {
+        return a | b;
+    }
+
+    // gcd(2u, 2v) = 2*gcd(u, v)
+    // trailing_zeros effectivelly gives us the greatest power of 2, as an amount to shift
+    let greatest_common_pow2_shift = (a | b).trailing_zeros();
+
+    // gcd(2u, v) = gcd(u, v) if v is odd
+    // gcd(u, 2v) = gcd(u, v) if u is odd
+    // Divide out greatest power of 2 for each to get both to be odd
+    // Includes greatest_common_pow2_shift automatically to make at least one odd before applying the odd vs even rule
+    a >>= a.trailing_zeros();
+    b >>= b.trailing_zeros();
+
+    // Both a and b are guaranteed to be odd throughout this loop
+    while a != b {
+        if a < b {
+            // Ensure difference of a and b will be positive
+            std::mem::swap(&mut a, &mut b);
+        }
+
+        // gcd(a, b) = gcd(a-b, b) if both a and b are odd
+        a -= b;
+
+        // gcd(2u, b) = gcd(u, b) if b is odd
+        // Divide out greatest power of 2 to ensure a is odd
+        a >>= a.trailing_zeros();
+        // b is already odd
+    }
+
+    a << greatest_common_pow2_shift
+}
+
+pub fn lcm(a: usize, b: usize) -> usize {
+    // Doing the division before the multiplication avoids overflow in the intermediate calculation
+    // The division is guaranteed to be an integer since the gcd inherently divides b
+    a * (b / gcd(a, b))
+}
+
 /// Simple 2d grid of elements
 ///
 /// Doesn't have all the checking that a good implementation should have
