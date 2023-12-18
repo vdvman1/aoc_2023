@@ -21,6 +21,10 @@ pub fn parse_vec<T: FromStr>(input: &str, delimiter: &str) -> Vec<T> {
     input.split(delimiter).flat_map(str::parse).collect()
 }
 
+pub fn get_bytes_len<const START: usize, const LEN: usize>(input: &str) -> [u8; LEN] {
+    input[START..(START + LEN)].as_bytes().try_into().unwrap()
+}
+
 /// Simple 2d grid of elements
 ///
 /// Doesn't have all the checking that a good implementation should have
